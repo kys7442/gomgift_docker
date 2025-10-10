@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./www:/var/www/html
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - php
+    networks:
+      - app-network
+
+  php:
+    build:
+      context: ./php
+      args:
+        PHP_VERSION: "8.2"
+    container_name: php
+    volumes:
+      - ./www:/var/www/html
+    networks:
+      - webnet
+
+  db:
+    image: mariadb:10.11
+    container_name: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD:dudtlr00
+      MYSQL_DATABASE:yc_gomgift
+      MYSQL_USER:gomgift
+      MYSQL_PASSWORD:Gomgift00
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    networks:
+      - webnet
+
+networks:
+  webnet:
+    driver: bridge
+
