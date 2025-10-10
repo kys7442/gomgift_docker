@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8'
 
 services:
   nginx:
@@ -13,7 +13,7 @@ services:
     depends_on:
       - php
     networks:
-      - app-network
+      - webnet
 
   php:
     build:
@@ -31,10 +31,10 @@ services:
     container_name: mariadb
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD:dudtlr00
-      MYSQL_DATABASE:yc_gomgift
-      MYSQL_USER:gomgift
-      MYSQL_PASSWORD:Gomgift00
+      MYSQL_ROOT_PASSWORD: dudtlr00
+      MYSQL_DATABASE: yc_gomgift
+      MYSQL_USER: gomgift
+      MYSQL_PASSWORD: Gomgift00
     volumes:
       - ./mysql/data:/var/lib/mysql
     networks:
