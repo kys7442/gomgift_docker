@@ -10,14 +10,11 @@ services:
       - ./www:/var/www/html
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-    environment:
-      - NGINX_CLIENT_MAX_BODY_SIZE=100m
-      - NGINX_PROXY_READ_TIMEOUT=300s
-      - NGINX_PROXY_SEND_TIMEOUT=300s
     depends_on:
       - php
     networks:
       - webnet
+    restart: unless-stopped
 
   php:
     build:
@@ -32,8 +29,10 @@ services:
       - PHP_MEMORY_LIMIT=2048M
       - PHP_UPLOAD_MAX_FILESIZE=100M
       - PHP_POST_MAX_SIZE=100M
+      - PHP_MAX_INPUT_VARS=30000
     networks:
       - webnet
+    restart: unless-stopped
 
   db:
     image: mariadb:10.11
