@@ -42,7 +42,10 @@ RUN apt-get update && apt-get install -y \
         shmop \
         sysvmsg \
         sysvsem \
-        sysvshm
+        sysvshm \
+        intl \
+        calendar \
+        wddx
 
 # Composer 설치
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer

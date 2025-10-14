@@ -30,6 +30,8 @@ services:
     image: mariadb:10.11
     container_name: mariadb
     restart: always
+    ports:
+      - "3306:3306"  # 외부 접근을 위한 포트 노출
     environment:
       MYSQL_ROOT_PASSWORD: dudtlr00
       MYSQL_DATABASE: yc_gomgift
