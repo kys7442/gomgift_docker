@@ -10,6 +10,10 @@ services:
       - ./www:/var/www/html
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    environment:
+      - NGINX_CLIENT_MAX_BODY_SIZE=100m
+      - NGINX_PROXY_READ_TIMEOUT=300s
+      - NGINX_PROXY_SEND_TIMEOUT=300s
     depends_on:
       - php
     networks:
@@ -23,6 +27,11 @@ services:
     container_name: php
     volumes:
       - ./www:/var/www/html
+    environment:
+      - PHP_MAX_EXECUTION_TIME=300
+      - PHP_MEMORY_LIMIT=2048M
+      - PHP_UPLOAD_MAX_FILESIZE=100M
+      - PHP_POST_MAX_SIZE=100M
     networks:
       - webnet
 
