@@ -7,10 +7,47 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
-    && docker-php-ext-install pdo pdo_mysql
+    libzip-dev \
+    zlib1g-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    libicu-dev \
+    libsqlite3-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+        pdo \
+        pdo_mysql \
+        mysqli \
+        gd \
+        zip \
+        mbstring \
+        xml \
+        curl \
+        opcache \
+        bcmath \
+        soap \
+        sockets \
+        exif \
+        fileinfo \
+        ftp \
+        gettext \
+        gmp \
+        pcntl \
+        pdo_sqlite \
+        shmop \
+        sysvmsg \
+        sysvsem \
+        sysvshm
 
 # Composer 설치
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Composer 버전 확인용 출력 (선택)
 RUN composer --version
+
+WORKDIR /www/yc_gomgift
