@@ -3,24 +3,55 @@ www/yc_gomgift/
 
 # Docker 관련
 mysql/data/
+docker-compose.override.yml
+
+# 데이터베이스 관련
+*.sql
+*.db
+*.sqlite
+*.sqlite3
 
 # 로그 파일
 *.log
+logs/
+log/
 
 # 임시 파일
 *.tmp
 *.temp
+*.cache
 
 # OS 관련
 .DS_Store
 Thumbs.db
+*.swp
+*.swo
 
 # IDE 관련
 .vscode/
 .idea/
-*.swp
-*.swo
+*.sublime-*
 
 # 백업 파일
 *.bak
 *.backup
+*.old
+
+# 환경 설정 파일
+.env
+.env.local
+.env.production
+
+# Node.js (만약 사용한다면)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# PHP 관련
+vendor/
+composer.lock
+
+# 업로드 파일
+uploads/
+files/
