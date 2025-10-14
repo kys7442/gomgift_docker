@@ -44,8 +44,7 @@ RUN apt-get update && apt-get install -y \
         sysvsem \
         sysvshm \
         intl \
-        calendar \
-        wddx
+        calendar
 
 # Composer 설치
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
