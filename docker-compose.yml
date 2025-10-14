@@ -25,7 +25,7 @@ services:
     volumes:
       - ./www:/var/www/html
     environment:
-      - PHP_MAX_EXECUTION_TIME=300
+      - PHP_MAX_EXECUTION_TIME=3000
       - PHP_MEMORY_LIMIT=2048M
       - PHP_UPLOAD_MAX_FILESIZE=100M
       - PHP_POST_MAX_SIZE=100M
