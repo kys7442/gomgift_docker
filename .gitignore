@@ -1,0 +1,26 @@
+# 프로젝트 디렉토리 제외
+www/yc_gomgift/
+
+# Docker 관련
+mysql/data/
+
+# 로그 파일
+*.log
+
+# 임시 파일
+*.tmp
+*.temp
+
+# OS 관련
+.DS_Store
+Thumbs.db
+
+# IDE 관련
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 백업 파일
+*.bak
+*.backup
