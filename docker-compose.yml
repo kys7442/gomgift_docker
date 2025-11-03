@@ -24,6 +24,8 @@ services:
     container_name: php
     volumes:
       - ./www:/var/www/html
+      # PHP 설정 파일을 볼륨으로 마운트 (개발 중 빠른 변경을 위해 주석 해제)
+      # - ./php/php.ini:/usr/local/etc/php/conf.d/custom.ini
     environment:
       - PHP_MAX_EXECUTION_TIME=3000
       - PHP_MEMORY_LIMIT=2048M

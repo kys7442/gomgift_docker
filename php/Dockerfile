@@ -52,4 +52,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Composer 버전 확인용 출력 (선택)
 RUN composer --version
 
+# 커스텀 php.ini 파일 복사
+COPY php.ini /usr/local/etc/php/conf.d/custom.ini
+
 WORKDIR /www/yc_gomgift
