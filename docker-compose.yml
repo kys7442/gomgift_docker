@@ -5,7 +5,8 @@ services:
     image: nginx:latest
     container_name: nginx
     ports:
-      - "80:80"
+      - "80:80"      # PHP 8.2 프로젝트 (yc_gomgift)
+      - "8080:8080"  # PHP 7.4 프로젝트 (gomgift_net)
     volumes:
       - ./www:/var/www/html
       - ./nginx/conf.d:/etc/nginx/conf.d
