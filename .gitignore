@@ -1,15 +1,15 @@
 # 프로젝트 디렉토리 제외
-www/yc_gomgift/
+www/
 
 # Docker 관련
 mysql/data/
 docker-compose.override.yml
 
-# 데이터베이스 관련
-*.sql
+# 데이터베이스 관련 (단, mysql/init/ 디렉토리의 SQL은 제외)
 *.db
 *.sqlite
 *.sqlite3
+!mysql/init/*.sql
 
 # 로그 파일
 *.log

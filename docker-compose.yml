@@ -5,27 +5,46 @@ services:
     image: nginx:latest
     container_name: nginx
     ports:
-      - "80:80"
+      - "80:80"      # PHP 8.2 프로젝트 (yc_gomgift)
+      - "8080:8080"  # PHP 7.4 프로젝트 (gomgift_net)
+      - "8090:8090"  # PHP 7.4 프로젝트 CP (gomgift_net application_cp)
     volumes:
       - ./www:/var/www/html
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
     depends_on:
-      - php
+      - php74
+      - php82
     networks:
       - webnet
     restart: unless-stopped
 
-  php:
+  php74:
+    build:
+      context: ./php
+      args:
+        PHP_VERSION: "7.4"
+    container_name: php74
+    volumes:
+      - ./www:/var/www/html
+    environment:
+      - PHP_MAX_EXECUTION_TIME=3000
+      - PHP_MEMORY_LIMIT=2048M
+      - PHP_UPLOAD_MAX_FILESIZE=100M
+      - PHP_POST_MAX_SIZE=100M
+      - PHP_MAX_INPUT_VARS=30000
+    networks:
+      - webnet
+    restart: unless-stopped
+
+  php82:
     build:
       context: ./php
       args:
         PHP_VERSION: "8.2"
-    container_name: php
+    container_name: php82
     volumes:
       - ./www:/var/www/html
-      # PHP 설정 파일을 볼륨으로 마운트 (개발 중 빠른 변경을 위해 주석 해제)
-      # - ./php/php.ini:/usr/local/etc/php/conf.d/custom.ini
     environment:
       - PHP_MAX_EXECUTION_TIME=3000
       - PHP_MEMORY_LIMIT=2048M
@@ -49,6 +68,8 @@ services:
       MYSQL_PASSWORD: Gomgift00
     volumes:
       - ./mysql/data:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      - ./mysql/init:/docker-entrypoint-initdb.d
     networks:
       - webnet
 
