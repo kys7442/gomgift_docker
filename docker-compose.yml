@@ -1,13 +1,13 @@
-# version: '3.8'
+version: '3.8'
 
 services:
   nginx:
     image: nginx:latest
     container_name: nginx
     ports:
-      - "80:80"      # PHP 8.2 프로젝트 (yc_gomgift)
-      - "8080:8080"  # PHP 7.4 프로젝트 (gomgift_net)
-      - "8090:8090"  # PHP 7.4 프로젝트 CP (gomgift_net application_cp)
+      - "80:80"
+      - "8080:8080"
+      - "8090:8090"
     volumes:
       - ./www:/var/www/html
       - ./nginx/conf.d:/etc/nginx/conf.d
@@ -33,6 +33,8 @@ services:
       - PHP_UPLOAD_MAX_FILESIZE=100M
       - PHP_POST_MAX_SIZE=100M
       - PHP_MAX_INPUT_VARS=30000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - webnet
     restart: unless-stopped
@@ -51,6 +53,8 @@ services:
       - PHP_UPLOAD_MAX_FILESIZE=100M
       - PHP_POST_MAX_SIZE=100M
       - PHP_MAX_INPUT_VARS=30000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - webnet
     restart: unless-stopped
@@ -60,7 +64,7 @@ services:
     container_name: mariadb
     restart: always
     ports:
-      - "3306:3306"  # 외부 접근을 위한 포트 노출
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: dudtlr00
       MYSQL_DATABASE: yc_gomgift
@@ -76,4 +80,3 @@ services:
 networks:
   webnet:
     driver: bridge
-
