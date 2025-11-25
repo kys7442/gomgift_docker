@@ -59,6 +59,22 @@ services:
       - webnet
     restart: unless-stopped
 
+  pamp_node:
+    image: node:18-alpine
+    container_name: pamp_node
+    ports:
+      - "3000:3000"
+    working_dir: /usr/src/app
+    volumes:
+      - ./www/pamp:/usr/src/app
+      - pamp_node_node_modules:/usr/src/app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: sh -c "npm install && npm run dev"
+    networks:
+      - webnet
+    restart: unless-stopped
+
   db:
     image: mariadb:10.11
     container_name: mariadb
@@ -80,3 +96,7 @@ services:
 networks:
   webnet:
     driver: bridge
+
+volumes:
+  pamp_node_node_modules:
+    driver: local
