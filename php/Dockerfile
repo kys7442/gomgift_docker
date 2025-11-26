@@ -56,4 +56,7 @@ RUN composer --version
 # 커스텀 php.ini 파일 복사
 COPY php.ini /usr/local/etc/php/conf.d/custom.ini
 
+# PHP-FPM pool 설정 복사 (성능 최적화)
+COPY www.conf /usr/local/etc/php-fpm.d/www.conf
+
 WORKDIR /www/yc_gomgift
