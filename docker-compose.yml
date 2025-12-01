@@ -7,9 +7,9 @@ services:
       - "8080:8080"
       - "8090:8090"
     volumes:
-      - ./www:/var/www/html:cached  # ← cached 추가!
+      - ./www:/var/www/html:cached # ← cached 추가!
       - ./nginx/conf.d:/etc/nginx/conf.d:cached
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro  # read-only로 최적화
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # read-only로 최적화
     depends_on:
       - php74
       - php82
@@ -34,7 +34,7 @@ services:
         PHP_VERSION: "7.4"
     container_name: php74
     volumes:
-      - ./www:/var/www/html:cached  # ← cached 추가!
+      - ./www:/var/www/html:cached # ← cached 추가!
     environment:
       - PHP_MAX_EXECUTION_TIME=3000
       - PHP_MEMORY_LIMIT=2048M
@@ -69,7 +69,7 @@ services:
         PHP_VERSION: "8.2"
     container_name: php82
     volumes:
-      - ./www:/var/www/html:cached  # ← cached 추가!
+      - ./www:/var/www/html:cached # ← cached 추가!
     environment:
       - PHP_MAX_EXECUTION_TIME=3000
       - PHP_MEMORY_LIMIT=2048M
@@ -104,15 +104,15 @@ services:
       - "3000:3000"
     working_dir: /usr/src/app
     volumes:
-      - ./www/pamp:/usr/src/app:cached  # ← cached 추가!
+      - ./www/pamp:/usr/src/app:cached # ← cached 추가!
       - pamp_node_node_modules:/usr/src/app/node_modules
     environment:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
-      - DB_HOST=mariadb
-      - DB_USER=gomgift
-      - DB_PASSWORD=Gomgift00
-      - DB_NAME=yc_gomgift
+      # - DB_HOST=mariadb
+      # - DB_USER=gomgift
+      # - DB_PASSWORD=Gomgift00
+      # - DB_NAME=yc_gomgift
     command: sh -c "npm install --legacy-peer-deps && npm run dev -- -H 0.0.0.0"
     networks:
       - webnet
@@ -130,20 +130,14 @@ services:
       MYSQL_USER: gomgift
       MYSQL_PASSWORD: Gomgift00
     volumes:
-      - ./mysql/data:/var/lib/mysql:delegated  # ← delegated 추가!
+      - ./mysql/data:/var/lib/mysql:delegated # ← delegated 추가!
       - ./mysql/conf.d:/etc/mysql/conf.d:ro
       - ./mysql/init:/docker-entrypoint-initdb.d:ro
     networks:
       - webnet
     # MySQL 성능 최적화
     command: >
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
-      --innodb-buffer-pool-size=1G
-      --innodb-log-file-size=256M
-      --max-connections=500
-      --query-cache-size=0
-      --query-cache-type=0
+      --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-buffer-pool-size=1G --innodb-log-file-size=256M --max-connections=500 --query-cache-size=0 --query-cache-type=0
 
 networks:
   webnet:
