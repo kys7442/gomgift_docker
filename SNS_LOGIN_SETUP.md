@@ -24,14 +24,21 @@ ADD INDEX idx_sns (mb_sns_type, mb_sns_id);
 
 ## 2. API 엔드포인트
 
-### URL
+### 2.1 SNS 토큰 직접 연동
 ```
 POST /api/member_sns_login.php
 ```
-
-### 인증
+- Google / Naver / Kakao / Apple SDK에서 전달받은 토큰을 그대로 서버에 전달
 - **선택사항**: API 토큰 (보안 강화를 위해 사용 가능)
-- 기본적으로 토큰 없이도 사용 가능 (SNS 토큰 검증으로 대체 가능)
+
+### 2.2 Firebase 인증 연동
+```
+POST /api/member_firebase_login.php
+```
+- Firebase Authentication에서 발급한 `id_token`을 서버에 전달
+- 서버 측 `.env` 또는 환경변수에 `FIREBASE_API_KEY` 설정 필요
+  - Firebase 프로젝트 설정 > 웹 API 키 사용
+- 기본적으로 토큰 없이도 사용 가능 (Firebase 토큰 검증으로 대체 가능)
 
 ---
 
@@ -55,6 +62,16 @@ POST /api/member_sns_login.php
 | `id_token` | string | Google ID Token (Google 전용) |
 | `identity_token` | string | Apple Identity Token (Apple 전용) |
 | `authorization_code` | string | Apple Authorization Code (Apple 전용) |
+
+### Firebase 로그인 (member_firebase_login.php)
+
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| `id_token` | string | **필수**. Firebase Authentication ID Token |
+| `provider` | string | (선택) Firebase providerId, 예: `google.com`, `password`, `apple.com` |
+| `email` | string | (선택) 이메일 주소. 토큰에 없을 때 전달 |
+| `name` | string | (선택) 표시 이름 |
+| `photo_url` | string | (선택) 프로필 이미지 URL |
 
 ---
 
@@ -106,6 +123,17 @@ POST /api/member_sns_login.php
   "name": "홍길동",
   "identity_token": "eyJraWQiOiJlWGF1bm1...",
   "authorization_code": "c1234567890abcdef..."
+}
+```
+
+### Firebase 로그인 (앱)
+```json
+{
+  "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...",
+  "provider": "google.com",
+  "email": "user@gmail.com",
+  "name": "홍길동",
+  "photo_url": "https://lh3.googleusercontent.com/..."
 }
 ```
 
@@ -165,8 +193,15 @@ POST /api/member_sns_login.php
 1. 이메일이 있으면 이메일 기반으로 `mb_id` 생성
 2. 이메일이 없으면 SNS ID 기반으로 `mb_id` 생성
 3. 중복 체크 후 자동 회원가입
-4. `mb_email_certify`를 'Y'로 설정 (SNS 로그인은 이메일 인증 완료로 간주)
+4. `mb_email_certify`를 현재 날짜/시간으로 설정 (SNS 로그인은 이메일 인증 완료로 간주)
 5. JWT 토큰 및 Refresh 토큰 발급
+
+### Firebase 인증 흐름
+1. 앱에서 Firebase Authentication으로 로그인하여 `id_token` 획득
+2. `POST /api/member_firebase_login.php` 호출 시 `id_token` 전달
+3. 서버에서 `FIREBASE_API_KEY`로 Firebase REST API를 통해 토큰 검증
+4. 검증 성공 시 `providerId`에 따라 `mb_sns_type`을 `google`, `firebase_email`, `firebase_phone` 등으로 저장
+5. 기존 회원이면 로그인, 없으면 자동 회원가입 후 JWT/Refresh 토큰 발급
 
 ---
 
@@ -188,6 +223,8 @@ POST /api/member_sns_login.php
 ## 8. SNS 토큰 검증 (선택사항)
 
 보안을 강화하려면 서버에서 SNS 토큰을 검증하는 것을 권장합니다.
+
+Firebase 인증을 사용할 경우, `.env` 또는 서버 환경변수에 `FIREBASE_API_KEY`를 설정하고 `verify_firebase_id_token()` 함수를 통해 ID 토큰을 검증합니다. 이 API 키는 Firebase 콘솔의 **프로젝트 설정 > 일반 > 웹 API 키**에서 확인할 수 있습니다.
 
 ### Google 토큰 검증
 ```php
@@ -245,7 +282,203 @@ function verify_kakao_token($access_token) {
 
 ---
 
-## 9. 테스트 방법
+## 9. 프론트엔드 연동
+
+### JavaScript 라이브러리 사용
+
+프로젝트에 포함된 `js/sns_login_api.js` 파일을 사용하여 쉽게 SNS 로그인을 구현할 수 있습니다.
+
+#### HTML에 스크립트 추가
+```html
+<script src="/js/sns_login_api.js"></script>
+```
+
+#### Google 로그인 예제
+```javascript
+// Google Sign-In SDK 초기화 후
+function onGoogleSignIn(googleUser) {
+    googleLogin(googleUser)
+        .then(function(response) {
+            console.log('로그인 성공:', response.data);
+            // 로그인 성공 후 처리 (페이지 이동 등)
+            window.location.href = '/';
+        })
+        .catch(function(error) {
+            console.error('로그인 실패:', error);
+            alert('로그인에 실패했습니다: ' + error.message);
+        });
+}
+```
+
+#### 네이버 로그인 예제
+```javascript
+// 네이버 로그인 SDK 초기화 후
+function onNaverLogin(naverUser, accessToken) {
+    naverLogin(naverUser, accessToken)
+        .then(function(response) {
+            console.log('로그인 성공:', response.data);
+            window.location.href = '/';
+        })
+        .catch(function(error) {
+            console.error('로그인 실패:', error);
+            alert('로그인에 실패했습니다: ' + error.message);
+        });
+}
+```
+
+#### 카카오 로그인 예제
+```javascript
+// 카카오 로그인 SDK 초기화 후
+function onKakaoLogin(kakaoUser, accessToken) {
+    kakaoLogin(kakaoUser, accessToken)
+        .then(function(response) {
+            console.log('로그인 성공:', response.data);
+            window.location.href = '/';
+        })
+        .catch(function(error) {
+            console.error('로그인 실패:', error);
+            alert('로그인에 실패했습니다: ' + error.message);
+        });
+}
+```
+
+#### Apple 로그인 예제
+```javascript
+// Apple 로그인 SDK 초기화 후
+function onAppleLogin(appleUser, identityToken, authorizationCode) {
+    appleLogin(appleUser, identityToken, authorizationCode)
+        .then(function(response) {
+            console.log('로그인 성공:', response.data);
+            window.location.href = '/';
+        })
+        .catch(function(error) {
+            console.error('로그인 실패:', error);
+            alert('로그인에 실패했습니다: ' + error.message);
+        });
+}
+```
+
+#### 직접 API 호출 예제
+```javascript
+// 직접 API 호출
+snsLogin({
+    sns_type: 'google',
+    sns_id: '12345678901234567890',
+    email: 'user@gmail.com',
+    name: '홍길동',
+    photo_url: 'https://lh3.googleusercontent.com/...',
+    id_token: 'eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...',
+    access_token: 'ya29.a0AfH6SMC...'
+})
+.then(function(response) {
+    console.log('로그인 성공:', response);
+})
+.catch(function(error) {
+    console.error('로그인 실패:', error);
+});
+```
+
+#### 토큰 관리
+```javascript
+// 저장된 토큰 가져오기
+var accessToken = getAccessToken();
+var refreshToken = getRefreshToken();
+
+// 로그아웃 (토큰 제거)
+snsLogout();
+```
+
+#### Firebase 인증 연동 (웹)
+Firebase Web SDK에서 로그인 완료 후 `firebaseLogin` 함수를 호출해 서버와 동기화합니다.
+
+```javascript
+firebase.auth().signInWithPopup(googleProvider)
+  .then(async function(result) {
+      const user = result.user;
+      const idToken = await user.getIdToken();
+
+      firebaseLogin(idToken, {
+          email: user.email,
+          name: user.displayName,
+          photo_url: user.photoURL,
+          provider: result.credential && result.credential.providerId
+      })
+      .then(function(response) {
+          console.log('Firebase 로그인 성공:', response.data);
+          window.location.href = '/';
+      })
+      .catch(function(error) {
+          alert('서버 로그인 실패: ' + error.message);
+      });
+  })
+  .catch(function(error) {
+      console.error('Firebase 인증 실패:', error);
+  });
+```
+
+### React Native / 모바일 앱 연동
+
+모바일 앱에서는 직접 fetch API를 사용하여 호출할 수 있습니다:
+
+```javascript
+async function snsLoginMobile(params) {
+    try {
+        const response = await fetch('https://your-domain.com/api/member_sns_login.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify(params)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // 토큰 저장 (AsyncStorage 등)
+            await AsyncStorage.setItem('access_token', data.data.access_token);
+            if (data.data.refresh_token) {
+                await AsyncStorage.setItem('refresh_token', data.data.refresh_token);
+            }
+            return data;
+        } else {
+            throw new Error(data.message || '로그인에 실패했습니다.');
+        }
+    } catch (error) {
+        throw error;
+    }
+}
+```
+
+### Firebase Auth 연동 (모바일 공통)
+Firebase SDK로 로그인한 뒤 발급된 `idToken`을 서버에 전달해 회원 정보를 동기화합니다.
+
+```javascript
+async function syncFirebaseLogin(idToken, profile = {}) {
+    const response = await fetch('https://your-domain.com/api/member_firebase_login.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json; charset=utf-8'
+        },
+        body: JSON.stringify({
+            id_token: idToken,
+            email: profile.email,
+            name: profile.name,
+            photo_url: profile.photoURL,
+            provider: profile.providerId
+        })
+    });
+
+    const data = await response.json();
+    if (!data.success) {
+        throw new Error(data.message || 'Firebase 로그인 동기화 실패');
+    }
+    return data;
+}
+```
+
+---
+
+## 10. 테스트 방법
 
 ### Postman 테스트
 
@@ -268,17 +501,17 @@ function verify_kakao_token($access_token) {
 
 ---
 
-## 10. 주의사항
+## 11. 주의사항
 
 1. **SNS 토큰 검증**: 보안을 강화하려면 서버에서 SNS 토큰을 검증하는 것을 권장합니다.
 2. **중복 가입 방지**: 같은 이메일로 여러 SNS 계정이 가입되는 것을 방지하려면 이메일 기반 중복 체크를 추가할 수 있습니다.
 3. **프로필 사진**: `photo_url`은 `mb_icon` 컬럼에 저장됩니다 (컬럼이 있는 경우).
 4. **비밀번호**: SNS 로그인 사용자는 랜덤 비밀번호가 생성되지만, 실제로는 사용하지 않습니다.
-5. **이메일 인증**: SNS 로그인 사용자는 `mb_email_certify`가 자동으로 설정됩니다.
+5. **이메일 인증**: SNS 로그인 사용자는 `mb_email_certify`가 현재 날짜/시간으로 자동 설정됩니다 (그누보드5 표준 형식).
 
 ---
 
-## 11. 데이터베이스 확인
+## 12. 데이터베이스 확인
 
 ### SNS 로그인 회원 조회
 ```sql
@@ -297,7 +530,7 @@ WHERE mb_sns_type = 'google';
 
 ---
 
-## 12. 문제 해결
+## 13. 문제 해결
 
 ### 회원가입 실패
 - 데이터베이스 컬럼 확인

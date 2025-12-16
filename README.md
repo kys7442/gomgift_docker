@@ -1,110 +1,88 @@
-# Docker 웹 개발 환경
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
-이 프로젝트는 PHP, Nginx, MariaDB를 사용한 웹 개발 환경입니다.
+## Getting Started
 
-## 구성 요소
-
-- **Nginx**: 웹 서버 (포트 80)
-- **PHP 8.2**: PHP-FPM with 필수 모듈 (gd, mysql, curl, mbstring 등)
-- **MariaDB 10.11**: 데이터베이스 서버 (포트 3306)
-
-## 설치된 PHP 모듈
-
-- gd (이미지 처리)
-- pdo_mysql, mysqli (MySQL/MariaDB 연결)
-- curl (HTTP 요청)
-- mbstring (멀티바이트 문자열)
-- xml (XML 처리)
-- zip (압축 파일)
-- opcache (성능 최적화)
-- bcmath (정밀 계산)
-- soap (SOAP 웹서비스)
-- sockets (소켓 통신)
-- exif (이미지 메타데이터)
-- intl (국제화)
-- calendar (달력 함수)
-- wddx (WDDX 직렬화)
-
-## 사용 방법
-
-### 1. 도커 컨테이너 실행
+First, run the development server:
 
 ```bash
-docker-compose up -d
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### 2. 도메인 설정
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-로컬에서 `test.gomgift.com` 도메인을 사용하려면 `/etc/hosts` 파일에 다음을 추가하세요:
+You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
 
-```
-127.0.0.1 test.gomgift.com
-```
+[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
 
-### 3. 접속 확인
+The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
 
-- 웹사이트: http://test.gomgift.com
-- PHP 정보: http://test.gomgift.com/index.php
-- DB 연결 테스트: http://test.gomgift.com/test_db_connection.php
+This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## 데이터베이스 설정
+## Learn More
 
-### 로컬 MariaDB
-- 호스트: mariadb (컨테이너 내부) 또는 localhost:3306 (외부 접근)
-- 데이터베이스: yc_gomgift
-- 사용자: gomgift
-- 비밀번호: Gomgift00
+To learn more about Next.js, take a look at the following resources:
 
-### 외부 DB 연결
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
 
-외부 DB를 사용하려면 다음 파일들을 수정하세요:
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-1. **`www/yc_gomgift/config/external_db.php`**: 외부 DB 서버 정보 설정
-   ```php
-   $external_db_settings = [
-       'host' => 'your-external-db-host.com',
-       'port' => '3306',
-       'database' => 'yc_gomgift',
-       'username' => 'your_external_user',
-       'password' => 'your_external_password',
-       // SSL 설정 등 추가 옵션
-   ];
-   ```
+## Deploy on Vercel
 
-2. **`www/yc_gomgift/config/database.php`**: `$use_external_db = true`로 변경
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## 프로젝트 구조
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+
+
+##Version
+
+- 1.0.0
+
+
+##install
 
 ```
-www/
-└── yc_gomgift/
-    ├── index.php              # 메인 페이지 (PHP 정보)
-    ├── test_db_connection.php # DB 연결 테스트
-    └── config/
-        ├── database.php       # 로컬 DB 설정 파일
-        └── external_db.php    # 외부 DB 설정 파일
+node v22.10.0
+npm v10.9.0
 ```
 
-## 유용한 명령어
+## Bible Highlights API
 
+모바일 앱과의 동기화를 위해 다음 REST 엔드포인트가 추가되었습니다.
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| POST | `/api/bible/highlights` | 하이라이트 저장 |
+| GET | `/api/bible/highlights` | 하이라이트 목록 조회 (필터/페이지네이션 지원) |
+| PUT | `/api/bible/highlights/:id` | 하이라이트 수정 |
+| DELETE | `/api/bible/highlights/:id` | 하이라이트 삭제(소프트) |
+| POST | `/api/bible/highlights/sync` | 단말 ↔ 서버 간 하이라이트 동기화 |
+
+### 공통 요구 사항
+- `Authorization: Bearer {JWT}` 헤더와 `x-request-source: app` 헤더가 반드시 포함돼야 합니다.
+- JWT는 `/api/login`에서 발급되며, 세션 검증을 통과해야 합니다.
+- 요청/응답 형식은 `application/json`입니다.
+
+### 예시 (저장)
 ```bash
-# 컨테이너 상태 확인
-docker-compose ps
-
-# 로그 확인
-docker-compose logs nginx
-docker-compose logs php
-docker-compose logs mariadb
-
-# 컨테이너 재시작
-docker-compose restart
-
-# 컨테이너 중지
-docker-compose down
+curl -X POST https://www.pamp.co.kr/api/bible/highlights \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "x-request-source: app" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "book_id": 1,
+    "chapter_id": 1,
+    "verse_number": "1",
+    "start_position": 0,
+    "end_position": 10,
+    "selected_text": "태초에 하나님이",
+    "style": "highlight",
+    "color": "yellow"
+  }'
 ```
-
-## 문제 해결
-
-1. **도메인 접속 불가**: `/etc/hosts` 파일에 도메인 추가 확인
-2. **DB 연결 실패**: 컨테이너가 모두 실행되었는지 확인
-3. **PHP 모듈 누락**: PHP 컨테이너 재빌드 (`docker-compose build php`)
