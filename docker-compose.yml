@@ -14,6 +14,7 @@ services:
       - php74
       - php82
       - pamp_node
+      - intx_node
     networks:
       - webnet
     restart: unless-stopped
@@ -118,6 +119,32 @@ services:
       - webnet
     restart: unless-stopped
 
+  intx_node:
+    image: node:20-alpine
+    container_name: intx_node
+    ports:
+      - "3001:3000"
+    working_dir: /usr/src/app
+    volumes:
+      - ./www/intx-nextjs:/usr/src/app:cached
+      - intx_node_node_modules:/usr/src/app/node_modules
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - WATCHPACK_POLLING=true
+    command: >
+      sh -c "
+      npm install --legacy-peer-deps &&
+      if [ \"$$NODE_ENV\" = \"production\" ]; then
+        npm run build --webpack &&
+        npm run start -- -H 0.0.0.0
+      else
+        npm run dev --webpack -- -H 0.0.0.0
+      fi
+      "
+    networks:
+      - webnet
+    restart: unless-stopped
+
   db:
     image: mariadb:10.11
     container_name: mariadb
@@ -139,10 +166,10 @@ services:
     command: >
       --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-buffer-pool-size=1G --innodb-log-file-size=256M --max-connections=500 --query-cache-size=0 --query-cache-type=0
 
+volumes:
+  pamp_node_node_modules:
+  intx_node_node_modules:
+
 networks:
   webnet:
     driver: bridge
-
-volumes:
-  pamp_node_node_modules:
-    driver: local
