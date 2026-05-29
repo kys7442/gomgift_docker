@@ -1,0 +1,51 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+.npm
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# Editors
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Database
+*.sql
+mysql/data
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+dist
+build
+*.o
+*.a
+
+# Logs
+logs
+*.log
+*.log.*
+
+# Temporary files
+tmp
+temp
+.env.local
+.env.*.local

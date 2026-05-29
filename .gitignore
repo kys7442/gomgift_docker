@@ -5,6 +5,9 @@ www/
 mysql/data/
 docker-compose.override.yml
 
+# SSL 인증서 / 개인키 (절대 커밋 금지)
+nginx/certs/
+
 # 데이터베이스 관련 (단, mysql/init/ 디렉토리의 SQL은 제외)
 *.db
 *.sqlite

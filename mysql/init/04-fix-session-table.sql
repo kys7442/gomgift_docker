@@ -1,7 +1,7 @@
 -- 세션 테이블 수정 스크립트
 -- 중복 세션 데이터 정리 및 PRIMARY KEY 추가
 
-USE gomgift_net;
+USE yc_gomgift;
 
 -- 1. 중복 세션 데이터 정리 (가장 최근 것만 유지)
 DELETE t1 FROM jgt_sessions t1
@@ -17,7 +17,7 @@ WHERE t1.timestamp < t2.max_timestamp;
 SET @pk_exists = (
     SELECT COUNT(*)
     FROM information_schema.table_constraints
-    WHERE table_schema = 'gomgift_net'
+    WHERE table_schema = 'yc_gomgift'
     AND table_name = 'jgt_sessions'
     AND constraint_type = 'PRIMARY KEY'
 );
@@ -35,7 +35,7 @@ DEALLOCATE PREPARE stmt;
 SET @idx_exists = (
     SELECT COUNT(*)
     FROM information_schema.statistics
-    WHERE table_schema = 'gomgift_net'
+    WHERE table_schema = 'yc_gomgift'
     AND table_name = 'jgt_sessions'
     AND index_name = 'jgt_sessions_timestamp'
 );

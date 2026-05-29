@@ -1,67 +1,52 @@
-services:
-  nginx:
-    image: nginx:latest
-    container_name: nginx
-    ports:
-      - "80:80"
-      - "8080:8080"
-      - "8090:8090"
-    volumes:
-      - ./www:/var/www/html:cached # ← cached 추가!
-      - ./nginx/conf.d:/etc/nginx/conf.d:cached
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # read-only로 최적화
-    depends_on:
-      - php74
-      - php82
-      - pamp_node
-      - intx_node
-    networks:
-      - webnet
-    restart: unless-stopped
-    # DNS 최적화 (로컬 DNS 해석 속도 향상)
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    # 성능 최적화
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
+version: '3.8'
 
+services:
   php74:
     build:
       context: ./php
       args:
         PHP_VERSION: "7.4"
     container_name: php74
+    user: www
     volumes:
-      - ./www:/var/www/html:cached # ← cached 추가!
+      - ./www:/var/www/html:cached
     environment:
-      - PHP_MAX_EXECUTION_TIME=3000
-      - PHP_MEMORY_LIMIT=2048M
-      - PHP_UPLOAD_MAX_FILESIZE=100M
-      - PHP_POST_MAX_SIZE=100M
-      - PHP_MAX_INPUT_VARS=30000
-      # OpCache 최적화
-      - PHP_OPCACHE_ENABLE=1
-      - PHP_OPCACHE_MEMORY_CONSUMPTION=256
-      - PHP_OPCACHE_MAX_ACCELERATED_FILES=20000
-      - PHP_OPCACHE_VALIDATE_TIMESTAMPS=1
-      - PHP_OPCACHE_REVALIDATE_FREQ=2
+      PHP_MAX_EXECUTION_TIME: 3000
+      PHP_MEMORY_LIMIT: 2048M
+      PHP_UPLOAD_MAX_FILESIZE: 100M
+      PHP_POST_MAX_SIZE: 100M
+      PHP_MAX_INPUT_VARS: 30000
+      PHP_OPCACHE_ENABLE: 1
+      PHP_OPCACHE_MEMORY_CONSUMPTION: 256
+      PHP_OPCACHE_MAX_ACCELERATED_FILES: 20000
+      PHP_OPCACHE_VALIDATE_TIMESTAMPS: 1
+      PHP_OPCACHE_REVALIDATE_FREQ: 2
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
       - webnet
     restart: unless-stopped
-    # DNS 최적화
     dns:
       - 8.8.8.8
       - 8.8.4.4
-    # 성능 최적화
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(0);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   php82:
     build:
@@ -69,34 +54,93 @@ services:
       args:
         PHP_VERSION: "8.2"
     container_name: php82
+    user: www
     volumes:
-      - ./www:/var/www/html:cached # ← cached 추가!
+      - ./www:/var/www/html:cached
     environment:
-      - PHP_MAX_EXECUTION_TIME=3000
-      - PHP_MEMORY_LIMIT=2048M
-      - PHP_UPLOAD_MAX_FILESIZE=100M
-      - PHP_POST_MAX_SIZE=100M
-      - PHP_MAX_INPUT_VARS=30000
-      # OpCache 최적화
-      - PHP_OPCACHE_ENABLE=1
-      - PHP_OPCACHE_MEMORY_CONSUMPTION=256
-      - PHP_OPCACHE_MAX_ACCELERATED_FILES=20000
-      - PHP_OPCACHE_VALIDATE_TIMESTAMPS=1
-      - PHP_OPCACHE_REVALIDATE_FREQ=2
+      PHP_MAX_EXECUTION_TIME: 3000
+      PHP_MEMORY_LIMIT: 2048M
+      PHP_UPLOAD_MAX_FILESIZE: 100M
+      PHP_POST_MAX_SIZE: 100M
+      PHP_MAX_INPUT_VARS: 30000
+      PHP_OPCACHE_ENABLE: 1
+      PHP_OPCACHE_MEMORY_CONSUMPTION: 256
+      PHP_OPCACHE_MAX_ACCELERATED_FILES: 20000
+      PHP_OPCACHE_VALIDATE_TIMESTAMPS: 1
+      PHP_OPCACHE_REVALIDATE_FREQ: 2
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_SECURE: ${SMTP_SECURE}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
       - webnet
     restart: unless-stopped
-    # DNS 최적화
     dns:
       - 8.8.8.8
       - 8.8.4.4
-    # 성능 최적화
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(0);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+      - "8090:8090"
+    volumes:
+      - ./www:/var/www/html:cached
+      - ./nginx/conf.d:/etc/nginx/conf.d:cached
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - webnet
+    restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    depends_on:
+      php74:
+        condition: service_healthy
+      php82:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   pamp_node:
     image: node:18-alpine
@@ -105,19 +149,26 @@ services:
       - "3000:3000"
     working_dir: /usr/src/app
     volumes:
-      - ./www/pamp:/usr/src/app:cached # ← cached 추가!
+      - ./www/pamp:/usr/src/app:cached
       - pamp_node_node_modules:/usr/src/app/node_modules
     environment:
-      - NODE_ENV=development
-      - WATCHPACK_POLLING=true
-      # - DB_HOST=mariadb
-      # - DB_USER=gomgift
-      # - DB_PASSWORD=Gomgift00
-      # - DB_NAME=yc_gomgift
+      NODE_ENV: ${NODE_ENV:-development}
+      WATCHPACK_POLLING: 'true'
     command: sh -c "npm install --legacy-peer-deps && npm run dev -- -H 0.0.0.0"
     networks:
       - webnet
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   intx_node:
     image: node:20-slim
@@ -129,9 +180,8 @@ services:
       - ./www/intx-nextjs:/usr/src/app:cached
       - intx_node_node_modules:/usr/src/app/node_modules
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - WATCHPACK_POLLING=true
-    # [Claude] - 2026-02-24 - --webpack 플래그 제거 (Next.js 16 Turbopack 기본) - api-compat-fix
+      NODE_ENV: ${NODE_ENV:-development}
+      WATCHPACK_POLLING: 'true'
     command: >
       sh -c "
       npm install --legacy-peer-deps &&
@@ -145,27 +195,54 @@ services:
     networks:
       - webnet
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
-    image: mariadb:10.11
+    image: mariadb:10.11-jammy
     container_name: mariadb
     restart: always
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: dudtlr00
-      MYSQL_DATABASE: yc_gomgift
-      MYSQL_USER: gomgift
-      MYSQL_PASSWORD: Gomgift00
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ./mysql/data:/var/lib/mysql:delegated # ← delegated 추가!
+      - ./mysql/data:/var/lib/mysql:delegated
       - ./mysql/conf.d:/etc/mysql/conf.d:ro
       - ./mysql/init:/docker-entrypoint-initdb.d:ro
     networks:
       - webnet
-    # MySQL 성능 최적화
     command: >
-      --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-buffer-pool-size=1G --innodb-log-file-size=256M --max-connections=500 --query-cache-size=0 --query-cache-type=0
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=1G
+      --innodb-log-file-size=256M
+      --max-connections=500
+      --query-cache-size=0
+      --query-cache-type=0
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   pamp_node_node_modules:

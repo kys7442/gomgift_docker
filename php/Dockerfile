@@ -1,9 +1,9 @@
-# PHP 버전 지정
+# PHP builder stage - installs dependencies
 ARG PHP_VERSION=8.2
-FROM php:${PHP_VERSION}-fpm
+FROM php:${PHP_VERSION}-fpm as builder
 
-# 필수 패키지 설치
-RUN apt-get update && apt-get install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     git \
     curl \
@@ -19,44 +19,81 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libsqlite3-dev \
     libgmp-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-        pdo \
-        pdo_mysql \
-        mysqli \
-        gd \
-        zip \
-        mbstring \
-        xml \
-        curl \
-        opcache \
-        bcmath \
-        soap \
-        sockets \
-        exif \
-        fileinfo \
-        ftp \
-        gettext \
-        gmp \
-        pcntl \
-        pdo_sqlite \
-        shmop \
-        sysvmsg \
-        sysvsem \
-        sysvshm \
-        intl \
-        calendar
+    && rm -rf /var/lib/apt/lists/*
 
-# Composer 설치
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Configure and install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+    pdo \
+    pdo_mysql \
+    mysqli \
+    gd \
+    zip \
+    mbstring \
+    xml \
+    curl \
+    opcache \
+    bcmath \
+    soap \
+    sockets \
+    exif \
+    fileinfo \
+    ftp \
+    gettext \
+    gmp \
+    pcntl \
+    pdo_sqlite \
+    shmop \
+    sysvmsg \
+    sysvsem \
+    sysvshm \
+    intl \
+    calendar
 
-# Composer 버전 확인용 출력 (선택)
-RUN composer --version
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
 
-# 커스텀 php.ini 파일 복사
+# Final stage
+FROM php:${PHP_VERSION}-fpm
+
+# Install runtime dependencies
+# PHP 7.4(bullseye)와 8.2(bookworm)는 베이스 OS가 달라 런타임 라이브러리 버전이
+# 다르므로(libzip4 vs 5, libicu67 vs 72 등), 패키지명을 고정하지 않고 빌드 스테이지와
+# 동일한 -dev 패키지를 설치해 확장(.so)이 요구하는 공유 라이브러리를 버전 자동 매칭한다.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libzip-dev \
+    zlib1g-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev \
+    libicu-dev \
+    libgmp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy PHP extensions from builder
+COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+
+# Create non-root user for security
+RUN useradd -m -s /bin/bash www \
+    && mkdir -p /var/www/html \
+    && chown -R www:www /var/www/html
+
+# Copy PHP configuration
 COPY php.ini /usr/local/etc/php/conf.d/custom.ini
-
-# PHP-FPM pool 설정 복사 (성능 최적화)
 COPY www.conf /usr/local/etc/php-fpm.d/www.conf
 
-WORKDIR /www/yc_gomgift
+# Set working directory
+WORKDIR /var/www/html
+
+# Use non-root user
+USER www
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD php -r "exit(0);"
+
+EXPOSE 9000

@@ -1,4 +1,4 @@
-USE gomgift_net;
+USE yc_gomgift;
 
 -- test.cp_gomgift.net:8090 추가
 INSERT INTO jgt_site (site_id, site_name, site_name_eng, site_base_url, site_channelio_pluginkey, ins_ip)
